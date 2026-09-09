@@ -10,9 +10,7 @@ export function openDB(){
     const req=indexedDB.open(DB_NAME,DB_VERSION);
     req.onupgradeneeded=()=>{
       const db=req.result;
-      for(const s of STORES){
-        if(!db.objectStoreNames.contains(s)) db.createObjectStore(s,{keyPath:'id'});
-      }
+      for(const s of STORES){if(!db.objectStoreNames.contains(s)) db.createObjectStore(s,{keyPath:'id'});}
     };
     req.onsuccess=()=>resolve(req.result);
     req.onerror=()=>reject(req.error);
@@ -28,13 +26,27 @@ export async function exportAll({includeBackups=false}={}){
   for(const s of STORES){if(s==='backups'&&!includeBackups)continue;data.stores[s]=await all(s)}
   return data;
 }
+function validateImport(data){
+  if(!data||data.app!=='Mi Dinero Personal'||!data.stores||typeof data.stores!=='object') throw new Error('El respaldo no corresponde a Mi Dinero.');
+  const schema=Number(data.schema||0);if(!Number.isInteger(schema)||schema<1||schema>DB_VERSION) throw new Error('La versión del respaldo no es compatible con esta versión de Mi Dinero.');
+  for(const [name,items] of Object.entries(data.stores)){if(!STORES.includes(name))continue;if(!Array.isArray(items))throw new Error(`El respaldo contiene datos inválidos en ${name}.`);for(const item of items){if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id)throw new Error(`El respaldo contiene un registro inválido en ${name}.`);}}
+  return true;
+}
 export async function importAll(data){
-  if(!data || data.app!=='Mi Dinero Personal' || !data.stores) throw new Error('El respaldo no corresponde a Mi Dinero.');
-  for(const s of STORES){
-    if(s==='backups') continue;
-    if(!Array.isArray(data.stores[s])) continue;
-    await clear(s);for(const item of data.stores[s]) await put(s,item);
-  }
+  validateImport(data);
+  const db=await openDB();
+  const targetStores=STORES.filter(s=>s!=='backups');
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(targetStores,'readwrite');
+    tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||new Error('No se pudo restaurar el respaldo.'));tx.onabort=()=>reject(tx.error||new Error('La restauración fue cancelada para proteger tus datos.'));
+    try{
+      for(const s of targetStores){
+        const os=tx.objectStore(s);os.clear();
+        const items=Array.isArray(data.stores[s])?data.stores[s]:[];
+        for(const item of items) os.put(item);
+      }
+    }catch(err){tx.abort();reject(err)}
+  });
 }
 export async function createLocalSnapshot(reason='automatic'){
   const snapshot=await exportAll({includeBackups:false});
