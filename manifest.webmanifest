@@ -1,0 +1,14 @@
+{
+  "name": "Mi Dinero — Finanzas personales",
+  "short_name": "Mi Dinero",
+  "description": "Aplicación financiera personal offline-first",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "lang": "es",
+  "icons": [
+    {"src":"icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
