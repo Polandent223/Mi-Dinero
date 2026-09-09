@@ -1,12 +1,17 @@
-export const ASSET_TYPES=['Efectivo / cuenta','Reserva','Inversión','Vehículo','Inmueble','Negocio','Otro'];
+export const ASSET_TYPES=['Efectivo / cuenta','Vehículo','Inmueble','Negocio','Otro'];
 export const LIABILITY_TYPES=['Tarjeta','Préstamo','Vehículo','Hipoteca','Familiar','Otro'];
 export const PORTFOLIO_FUNCTIONS=['Crecer','Proteger','Cubrir','Estar disponible'];
 
 export function moneyNumber(v){const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&n>=0?n:0}
-export function netWorth(assets=[],liabilities=[]){
-  const assetTotal=assets.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.value),0);
-  const liabilityTotal=liabilities.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.balance),0);
-  return {assetTotal,liabilityTotal,net:assetTotal-liabilityTotal};
+export function netWorth({assets=[],liabilities=[],reserveCurrent=0,investments=[],debts=[]}={}){
+  const manualAssets=assets.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.value),0);
+  const investmentValue=investments.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.currentValue),0);
+  const reserveValue=moneyNumber(reserveCurrent);
+  const manualLiabilities=liabilities.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.balance),0);
+  const debtValue=debts.filter(x=>!x.deletedAt).reduce((s,x)=>s+moneyNumber(x.balance),0);
+  const assetTotal=manualAssets+reserveValue+investmentValue;
+  const liabilityTotal=manualLiabilities+debtValue;
+  return {manualAssets,reserveValue,investmentValue,manualLiabilities,debtValue,assetTotal,liabilityTotal,net:assetTotal-liabilityTotal};
 }
 export function portfolioSummary(investments=[]){
   const active=investments.filter(x=>!x.deletedAt);
@@ -18,12 +23,12 @@ export function portfolioSummary(investments=[]){
   });
   return {total,cost,gain:total-cost,returnPct:cost>0?(total-cost)/cost:0,byFunction};
 }
-export function investmentReadiness({reserveCurrent=0,reserveMonthlyEssential=0,activeDebts=[]}={}){
+export function investmentReadiness({reserveCurrent=0,reserveMonthlyEssential=0,activeDebts=[],expensiveDebtRate=null}={}){
   const reserveMonths=moneyNumber(reserveMonthlyEssential)>0?moneyNumber(reserveCurrent)/moneyNumber(reserveMonthlyEssential):0;
-  const expensiveDebt=(activeDebts||[]).some(d=>!d.deletedAt&&moneyNumber(d.balance)>0&&moneyNumber(d.annualRate)>=20);
-  const checks=[
-    {id:'reserve',label:'Reserva de al menos 3 meses',ok:reserveMonths>=3},
-    {id:'debt',label:'Sin deuda cara activa',ok:!expensiveDebt}
-  ];
-  return {reserveMonths,expensiveDebt,checks,ready:checks.every(x=>x.ok)};
+  const hasRateThreshold=Number.isFinite(Number(expensiveDebtRate))&&Number(expensiveDebtRate)>0;
+  const expensiveDebt=hasRateThreshold?(activeDebts||[]).some(d=>!d.deletedAt&&moneyNumber(d.balance)>0&&moneyNumber(d.annualRate)>=Number(expensiveDebtRate)):null;
+  const checks=[{id:'reserve',label:'Reserva de al menos 3 meses',ok:reserveMonths>=3,status:reserveMonths>=3?'ok':'review'}];
+  if(hasRateThreshold)checks.push({id:'debt',label:`Sin deuda con tasa igual o mayor a ${Number(expensiveDebtRate).toFixed(1)}% anual`,ok:!expensiveDebt,status:expensiveDebt?'review':'ok'});
+  else checks.push({id:'debt',label:'Revisar si alguna deuda tiene un costo demasiado alto para ti',ok:null,status:'manual'});
+  return {reserveMonths,expensiveDebt,hasRateThreshold,checks,ready:checks.every(x=>x.ok===true)};
 }
