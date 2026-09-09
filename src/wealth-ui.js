@@ -1,0 +1,57 @@
+import {get,put,all} from './db.js';
+import {newId} from './security.js';
+import {ASSET_TYPES,LIABILITY_TYPES,PORTFOLIO_FUNCTIONS,netWorth,portfolioSummary,investmentReadiness} from './portfolio.js';
+
+const main=document.querySelector('#main');
+const nav=document.querySelector('#bottomNav');
+const toast=document.querySelector('#toast');
+const button=document.querySelector('#wealthNav');
+const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&n>=0?n:0};
+const esc=(s='')=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));
+const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fmt=(v,c='USD')=>{try{return new Intl.NumberFormat('es-VE',{style:'currency',currency:c,maximumFractionDigits:2}).format(Number(v||0))}catch{return `${Number(v||0).toFixed(2)} ${c}`}};
+const signed=(v,c)=>`${Number(v||0)>0?'+':''}${fmt(v,c)}`;
+function flash(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
+async function currency(){return (await get('settings','main'))?.currency||'USD'}
+function money(name,label){return `<label>${label}</label><input name="${name}" inputmode="decimal" min="0" step="0.01" placeholder="0.00">`}
+
+async function renderWealth(){
+  const c=await currency();
+  const assets=(await all('assets')).filter(x=>!x.deletedAt), liabilities=(await all('liabilities')).filter(x=>!x.deletedAt), investments=(await all('investments')).filter(x=>!x.deletedAt);
+  const debts=(await all('debts')).filter(x=>!x.deletedAt&&num(x.balance)>0), reserve=await get('reserves','emergency');
+  const contributions=(await all('investmentContributions')).filter(x=>!x.deletedAt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const nw=netWorth(assets,liabilities), ps=portfolioSummary(investments), ready=investmentReadiness({reserveCurrent:num(reserve?.currentAmount),reserveMonthlyEssential:num(reserve?.monthlyEssential),activeDebts:debts});
+  nav?.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active',x===button));
+  main.innerHTML=`<section class="card hero"><div class="eyebrow">Parte 7 · Patrimonio e inversiones</div><h2>Tu panorama completo</h2><p class="muted">Mide lo que tienes, lo que debes y cómo está distribuida tu cartera. Los valores se actualizan manualmente y siguen guardados en tu dispositivo.</p></section>
+  <section class="grid two"><div class="stat"><div class="muted small">Patrimonio neto</div><div class="value ${nw.net<0?'negative':''}">${fmt(nw.net,c)}</div><div class="tiny muted">Activos ${fmt(nw.assetTotal,c)} · Pasivos ${fmt(nw.liabilityTotal,c)}</div></div><div class="stat"><div class="muted small">Cartera</div><div class="value">${fmt(ps.total,c)}</div><div class="tiny muted">Aportado ${fmt(ps.cost,c)} · resultado ${signed(ps.gain,c)}</div></div></section>
+  <section class="card"><div class="row between"><div><div class="eyebrow">Antes de invertir</div><h3>Semáforo de preparación</h3></div><span class="pill">${ready.ready?'Preparado':'Pendiente'}</span></div><div class="stack">${ready.checks.map(x=>`<div class="history-row"><strong>${x.ok?'✓':'○'} ${esc(x.label)}</strong><span>${x.ok?'Cumplido':'Revisar'}</span></div>`).join('')}</div><p class="small muted">Reserva estimada: ${ready.reserveMonths.toFixed(1)} meses. Esta señal es orientativa y usa únicamente los datos que registraste.</p></section>
+  <section class="card"><h3>Nuevo activo</h3><form id="wealthAssetForm"><label>Nombre</label><input name="name" required maxlength="60" placeholder="Cuenta, vehículo, inmueble…"><label>Tipo</label><select name="type">${ASSET_TYPES.map(x=>`<option>${x}</option>`).join('')}</select>${money('value','Valor actual')}<button class="btn" type="submit">Guardar activo</button></form></section>
+  <section class="card"><div class="row between"><h3>Activos</h3><span class="pill">${assets.length}</span></div>${assets.length?`<div class="stack">${assets.map(x=>`<div class="history-row"><div><strong>${esc(x.name)}</strong><div class="small muted">${esc(x.type)}</div></div><div class="right"><strong>${fmt(x.value,c)}</strong><button class="btn ghost mini" data-wealth-action="delete-asset" data-id="${esc(x.id)}">Eliminar</button></div></div>`).join('')}</div>`:'<p class="muted">Aún no registraste activos.</p>'}</section>
+  <section class="card"><h3>Nuevo pasivo patrimonial</h3><form id="wealthLiabilityForm"><label>Nombre</label><input name="name" required maxlength="60" placeholder="Hipoteca, préstamo…"><label>Tipo</label><select name="type">${LIABILITY_TYPES.map(x=>`<option>${x}</option>`).join('')}</select>${money('balance','Saldo pendiente')}<button class="btn" type="submit">Guardar pasivo</button></form></section>
+  <section class="card"><div class="row between"><h3>Pasivos</h3><span class="pill">${liabilities.length}</span></div>${liabilities.length?`<div class="stack">${liabilities.map(x=>`<div class="history-row"><div><strong>${esc(x.name)}</strong><div class="small muted">${esc(x.type)}</div></div><div class="right"><strong>${fmt(x.balance,c)}</strong><button class="btn ghost mini" data-wealth-action="delete-liability" data-id="${esc(x.id)}">Eliminar</button></div></div>`).join('')}</div>`:'<p class="muted">No registraste pasivos patrimoniales.</p>'}</section>
+  <section class="card"><div class="eyebrow">Cartera</div><h3>Nueva inversión</h3><form id="wealthInvestmentForm"><label>Nombre</label><input name="name" required maxlength="60" placeholder="ETF, fondo, bono, plazo fijo…"><label>Función en tu cartera</label><select name="function">${PORTFOLIO_FUNCTIONS.map(x=>`<option>${x}</option>`).join('')}</select><div class="grid two"><div>${money('contributed','Total aportado')}</div><div>${money('currentValue','Valor actual')}</div></div><button class="btn" type="submit">Guardar inversión</button></form></section>
+  <section class="card"><div class="row between"><div><div class="eyebrow">Distribución</div><h3>Funciones de la cartera</h3></div><span class="pill">${ps.cost>0?`${Math.round(ps.returnPct*100)}% retorno`:'Sin datos'}</span></div>${ps.total?`<div class="stack">${ps.byFunction.map(x=>`<div><div class="row between"><span>${esc(x.name)}</span><strong>${fmt(x.value,c)} · ${Math.round(x.share*100)}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.round(x.share*100)}%"></div></div></div>`).join('')}</div>`:'<p class="muted">Añade una inversión para ver la distribución.</p>'}</section>
+  <section class="card"><div class="row between"><h3>Inversiones</h3><span class="pill">${investments.length}</span></div>${investments.length?`<div class="stack">${investments.map(x=>`<div class="debt-row"><div class="row between"><div class="grow"><strong>${esc(x.name)}</strong><div class="small muted">${esc(x.function)} · aportado ${fmt(x.contributed,c)}</div><div class="tiny muted">Valor ${fmt(x.currentValue,c)} · resultado ${signed(num(x.currentValue)-num(x.contributed),c)}</div></div><div class="row wrap"><button class="btn ghost mini" data-wealth-action="contribute" data-id="${esc(x.id)}">Aportar</button><button class="btn ghost mini" data-wealth-action="update-value" data-id="${esc(x.id)}">Actualizar</button><button class="btn ghost mini" data-wealth-action="delete-investment" data-id="${esc(x.id)}">Eliminar</button></div></div></div>`).join('')}</div>`:'<p class="muted">Aún no hay inversiones registradas.</p>'}</section>
+  <section class="card"><div class="eyebrow">Historial</div><h3>Aportes de inversión</h3>${contributions.length?`<div class="stack">${contributions.slice(0,12).map(x=>`<div class="history-row"><div><strong>${esc(x.investmentName)}</strong><div class="small muted">${esc(x.date)}</div></div><strong>${fmt(x.amount,c)}</strong></div>`).join('')}</div>`:'<p class="muted">No hay aportes registrados.</p>'}</section>`;
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+button?.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();await renderWealth()},{capture:true});
+document.addEventListener('submit',async e=>{
+  if(!['wealthAssetForm','wealthLiabilityForm','wealthInvestmentForm'].includes(e.target.id))return;
+  e.preventDefault();e.stopImmediatePropagation();const fd=Object.fromEntries(new FormData(e.target)),now=new Date().toISOString();
+  try{
+    if(e.target.id==='wealthAssetForm'){if(!fd.name?.trim()||num(fd.value)<=0)throw new Error('Completa nombre y valor del activo.');await put('assets',{id:newId('asset'),name:fd.name.trim(),type:ASSET_TYPES.includes(fd.type)?fd.type:'Otro',value:num(fd.value),createdAt:now,updatedAt:now,deletedAt:null});flash('Activo guardado')}
+    if(e.target.id==='wealthLiabilityForm'){if(!fd.name?.trim()||num(fd.balance)<=0)throw new Error('Completa nombre y saldo del pasivo.');await put('liabilities',{id:newId('liability'),name:fd.name.trim(),type:LIABILITY_TYPES.includes(fd.type)?fd.type:'Otro',balance:num(fd.balance),createdAt:now,updatedAt:now,deletedAt:null});flash('Pasivo guardado')}
+    if(e.target.id==='wealthInvestmentForm'){if(!fd.name?.trim()||(num(fd.contributed)<=0&&num(fd.currentValue)<=0))throw new Error('Completa el nombre y un valor de la inversión.');await put('investments',{id:newId('investment'),name:fd.name.trim(),function:PORTFOLIO_FUNCTIONS.includes(fd.function)?fd.function:'Crecer',contributed:num(fd.contributed),currentValue:num(fd.currentValue),createdAt:now,updatedAt:now,deletedAt:null});flash('Inversión guardada')}
+    await renderWealth();
+  }catch(err){flash(err.message||'No se pudo guardar')}
+},{capture:true});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-wealth-action]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();const action=b.dataset.wealthAction,id=b.dataset.id,now=new Date().toISOString();
+  if(action==='delete-asset'){const x=await get('assets',id);if(x&&confirm(`¿Eliminar “${x.name}”?`)){x.deletedAt=now;x.updatedAt=now;await put('assets',x);flash('Activo eliminado');await renderWealth()}}
+  if(action==='delete-liability'){const x=await get('liabilities',id);if(x&&confirm(`¿Eliminar “${x.name}”?`)){x.deletedAt=now;x.updatedAt=now;await put('liabilities',x);flash('Pasivo eliminado');await renderWealth()}}
+  if(action==='delete-investment'){const x=await get('investments',id);if(x&&confirm(`¿Eliminar “${x.name}”?`)){x.deletedAt=now;x.updatedAt=now;await put('investments',x);flash('Inversión eliminada');await renderWealth()}}
+  if(action==='contribute'){const x=await get('investments',id);if(!x)return;const raw=prompt(`Aporte a “${x.name}”:`);if(raw===null)return;const amount=num(raw);if(amount<=0){flash('Indica un aporte mayor que cero');return}x.contributed=num(x.contributed)+amount;x.currentValue=num(x.currentValue)+amount;x.updatedAt=now;await put('investments',x);await put('investmentContributions',{id:newId('invcontrib'),investmentId:x.id,investmentName:x.name,amount,date:today(),createdAt:now,deletedAt:null});flash('Aporte registrado');await renderWealth()}
+  if(action==='update-value'){const x=await get('investments',id);if(!x)return;const raw=prompt(`Valor actual de “${x.name}”:`,String(x.currentValue||0));if(raw===null)return;const value=num(raw);x.currentValue=value;x.updatedAt=now;await put('investments',x);await put('portfolioSnapshots',{id:newId('portfolio'),investmentId:x.id,investmentName:x.name,value,date:today(),createdAt:now});flash('Valor actualizado');await renderWealth()}
+},{capture:true});
