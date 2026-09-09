@@ -25,10 +25,12 @@ export function portfolioSummary(investments=[]){
 }
 export function investmentReadiness({reserveCurrent=0,reserveMonthlyEssential=0,activeDebts=[],expensiveDebtRate=null}={}){
   const reserveMonths=moneyNumber(reserveMonthlyEssential)>0?moneyNumber(reserveCurrent)/moneyNumber(reserveMonthlyEssential):0;
+  const debts=(activeDebts||[]).filter(d=>!d.deletedAt&&moneyNumber(d.balance)>0);
   const hasRateThreshold=Number.isFinite(Number(expensiveDebtRate))&&Number(expensiveDebtRate)>0;
-  const expensiveDebt=hasRateThreshold?(activeDebts||[]).some(d=>!d.deletedAt&&moneyNumber(d.balance)>0&&moneyNumber(d.annualRate)>=Number(expensiveDebtRate)):null;
+  const expensiveDebt=hasRateThreshold?debts.some(d=>moneyNumber(d.annualRate)>=Number(expensiveDebtRate)):null;
   const checks=[{id:'reserve',label:'Reserva de al menos 3 meses',ok:reserveMonths>=3,status:reserveMonths>=3?'ok':'review'}];
-  if(hasRateThreshold)checks.push({id:'debt',label:`Sin deuda con tasa igual o mayor a ${Number(expensiveDebtRate).toFixed(1)}% anual`,ok:!expensiveDebt,status:expensiveDebt?'review':'ok'});
+  if(!debts.length)checks.push({id:'debt',label:'Sin deudas activas',ok:true,status:'ok'});
+  else if(hasRateThreshold)checks.push({id:'debt',label:`Sin deuda con tasa igual o mayor a ${Number(expensiveDebtRate).toFixed(1)}% anual`,ok:!expensiveDebt,status:expensiveDebt?'review':'ok'});
   else checks.push({id:'debt',label:'Revisar si alguna deuda tiene un costo demasiado alto para ti',ok:null,status:'manual'});
   return {reserveMonths,expensiveDebt,hasRateThreshold,checks,ready:checks.every(x=>x.ok===true)};
 }
