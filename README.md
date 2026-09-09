@@ -1,16 +1,26 @@
-# Mi Dinero — Parte 6 v3
+# Mi Dinero — sistema financiero personal
 
-App financiera personal offline-first.
+Aplicación personal, offline-first, para organizar ingresos, gastos, presupuesto, reserva, metas, deudas, decisiones de compra, patrimonio e inversiones.
 
-## Cierre de Parte 6
-- Historial dedicado de pagos de deuda.
-- Cada pago queda vinculado al movimiento de Obligaciones correspondiente.
-- Deshacer un pago restaura el saldo de la deuda y elimina lógicamente el movimiento asociado.
-- Los movimientos vinculados a pagos de deuda no se pueden editar/eliminar de forma independiente, evitando descuadres.
-- El asistente de compra conserva la regla de 12 preguntas y añade contexto financiero personal: disponible real, margen tras presupuesto, estado de reserva, deudas activas y costo mensual de mantenimiento.
-- El contexto no sustituye la puntuación del filtro; se muestra como una capa adicional de cautela.
-- IndexedDB esquema 15 y caché PWA renovado.
+## Estado actual
 
-Las simulaciones y evaluaciones son educativas y dependen de los datos introducidos. No sustituyen cálculos oficiales del acreedor ni asesoramiento financiero.
+- Partes 1–6 completas y conservadas.
+- Parte 7 incorpora patrimonio neto e inversiones.
+- Datos guardados primero en el dispositivo mediante IndexedDB.
+- PWA con funcionamiento offline y caché de archivos principales.
+- Acceso local por PIN.
+- Respaldo cifrado independiente.
 
-Ejecuta la carpeta mediante HTTP/HTTPS para probar correctamente el modo PWA/offline.
+## Parte 7 — Patrimonio e inversiones
+
+El módulo de Patrimonio integra automáticamente la reserva de emergencia, las inversiones registradas y las deudas activas para reducir el riesgo de doble conteo. Los activos y pasivos manuales se reservan para elementos que no estén ya registrados en otros módulos.
+
+La cartera se organiza por cuatro funciones: Crecer, Proteger, Cubrir y Estar disponible. Los valores se actualizan manualmente; la app no depende de cotizaciones en línea. El criterio de “deuda cara” no se fija automáticamente: el usuario puede indicar la tasa anual que desea usar como umbral.
+
+## Ejecución
+
+Para usar todas las funciones debe abrirse desde HTTPS o localhost. La versión publicada usa GitHub Pages.
+
+## Privacidad
+
+Mi Dinero está diseñado para un solo propietario. No incluye multiusuario ni funciones comerciales. Los datos financieros permanecen localmente salvo que el usuario exporte un respaldo.
