@@ -1,4 +1,4 @@
-const CACHE='mi-dinero-p7-v3';
+const CACHE='mi-dinero-p7-v4';
 const ASSETS=['./','./index.html','./styles.css','./manifest.webmanifest','./icons/icon.svg','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
