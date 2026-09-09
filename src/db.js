@@ -1,8 +1,8 @@
 const DB_NAME = 'mi-dinero-personal-db';
-const DB_VERSION = 13;
+const DB_VERSION = 15;
 const STORES = [
   'profile','settings','outbox','audit','drafts',
-  'diagnosis','diagnosisHistory','transactions','recurringTransactions','budgets','leakReviews','reserves','debts','goals','contributions','plannedExpenses','investments','rates','purchaseAssessments','backups'
+  'diagnosis','diagnosisHistory','transactions','recurringTransactions','budgets','leakReviews','reserves','debts','debtPlans','debtPayments','goals','contributions','plannedExpenses','investments','rates','purchaseAssessments','backups'
 ];
 
 export function openDB(){
@@ -24,7 +24,7 @@ export async function all(store){const db=await openDB();return new Promise((res
 export async function del(store,id){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
 export async function clear(store){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).clear();tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
 export async function exportAll({includeBackups=false}={}){
-  const data={schema:13,app:'Mi Dinero Personal',exportedAt:new Date().toISOString(),stores:{}};
+  const data={schema:15,app:'Mi Dinero Personal',exportedAt:new Date().toISOString(),stores:{}};
   for(const s of STORES){if(s==='backups'&&!includeBackups)continue;data.stores[s]=await all(s)}
   return data;
 }

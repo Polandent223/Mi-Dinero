@@ -1,14 +1,16 @@
-# Mi Dinero — Parte 6 v1
+# Mi Dinero — Parte 6 v3
 
 App financiera personal offline-first.
 
-## Novedades
-- Mapa de deudas con saldo, tasa anual, cuota y cuotas restantes.
-- Orden de ataque por avalancha o bola de nieve.
-- Registro de pagos conectado a Movimientos.
-- Simulador simple de plazo de la deuda prioritaria.
-- Asistente de compras con 12 criterios, puntaje y regla 9+/6-8/5-.
-- Historial de evaluaciones de compra.
-- IndexedDB esquema 13 y caché PWA renovado.
+## Cierre de Parte 6
+- Historial dedicado de pagos de deuda.
+- Cada pago queda vinculado al movimiento de Obligaciones correspondiente.
+- Deshacer un pago restaura el saldo de la deuda y elimina lógicamente el movimiento asociado.
+- Los movimientos vinculados a pagos de deuda no se pueden editar/eliminar de forma independiente, evitando descuadres.
+- El asistente de compra conserva la regla de 12 preguntas y añade contexto financiero personal: disponible real, margen tras presupuesto, estado de reserva, deudas activas y costo mensual de mantenimiento.
+- El contexto no sustituye la puntuación del filtro; se muestra como una capa adicional de cautela.
+- IndexedDB esquema 15 y caché PWA renovado.
+
+Las simulaciones y evaluaciones son educativas y dependen de los datos introducidos. No sustituyen cálculos oficiales del acreedor ni asesoramiento financiero.
 
 Ejecuta la carpeta mediante HTTP/HTTPS para probar correctamente el modo PWA/offline.
