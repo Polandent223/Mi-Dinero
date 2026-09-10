@@ -1,0 +1,30 @@
+name: Verificar Mi Dinero
+
+on:
+  push:
+    branches: [ main, parte-8-estabilidad ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Revisar sintaxis
+        run: |
+          node --check src/app.js
+          node --check src/db.js
+          node --check src/security.js
+          node --check src/sync.js
+          node --check src/portfolio.js
+          node --check src/wealth-ui.js
+          node --check src/integrity.js
+          node --check src/startup-guard.js
+      - name: Verificar estructura y cálculos
+        run: node scripts/verify.mjs
