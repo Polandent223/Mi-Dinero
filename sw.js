@@ -1,12 +1,12 @@
-const CACHE='mi-dinero-redesign-v1';
-const ASSETS=['./','./index.html','./styles.css','./dashboard.css','./manifest.webmanifest','./icons/icon.svg','./src/startup-guard.js','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js','./src/dashboard-ui.js','./src/integrity.js'];
+const CACHE='mi-dinero-redesign-v2';
+const ASSETS=['./','./index.html','./styles.css','./dashboard.css','./movements.css','./manifest.webmanifest','./icons/icon.svg','./src/startup-guard.js','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js','./src/dashboard-ui.js','./src/movements-ui.js','./src/integrity.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate',event=>{
-  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
 
 self.addEventListener('fetch',event=>{
