@@ -1,4 +1,4 @@
-const CACHE='mi-dinero-redesign-v3';
+const CACHE='mi-dinero-redesign-v4';
 const ASSETS=['./','./index.html','./styles.css','./dashboard.css','./movements.css','./sections.css','./manifest.webmanifest','./icons/icon.svg','./src/startup-guard.js','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js','./src/dashboard-ui.js','./src/movements-ui.js','./src/sections-ui.js','./src/integrity.js'];
 
 self.addEventListener('install',event=>{
