@@ -43,46 +43,31 @@ async function buildDashboard(){
     const recent=[...transactions].filter(x=>!x.deletedAt).sort((a,b)=>`${b.date||''}${b.createdAt||''}`.localeCompare(`${a.date||''}${a.createdAt||''}`)).slice(0,4);
 
     main.innerHTML=`
-      <section class="dashboard-welcome">
-        <div><div class="eyebrow">Hola, ${esc(profile.name)}</div><h2>Así va tu dinero</h2><p class="muted">Una vista simple de lo que tienes, lo que gastas y lo que estás construyendo.</p></div>
-      </section>
+      <section class="dashboard-welcome"><div><div class="eyebrow">Hola, ${esc(profile.name)}</div><h2>Así va tu dinero</h2><p class="muted">Una vista simple de lo que tienes, lo que gastas y lo que estás construyendo.</p></div></section>
       <section class="card dashboard-networth">
         <div class="row between"><div><div class="dashboard-label">Patrimonio neto</div><div class="dashboard-balance ${worth.net<0?'negative':''}">${fmt(worth.net,currency)}</div></div><button class="dashboard-eye" id="wealthNavShortcut" aria-label="Ver patrimonio">◈</button></div>
-        <div class="dashboard-net-meta"><span>Activos ${fmt(worth.totalAssets,currency)}</span><span>Pasivos ${fmt(worth.totalLiabilities,currency)}</span></div>
+        <div class="dashboard-net-meta"><span>Activos ${fmt(worth.assetTotal,currency)}</span><span>Pasivos ${fmt(worth.liabilityTotal,currency)}</span></div>
       </section>
       <section class="dashboard-pair">
         <button class="dashboard-mini income-card" data-route="transactions"><span class="dashboard-icon">↑</span><span><small>Ingresos del mes</small><strong>${fmt(income,currency)}</strong></span></button>
         <button class="dashboard-mini expense-card" data-route="transactions"><span class="dashboard-icon">↓</span><span><small>Gastos del mes</small><strong>${fmt(expense,currency)}</strong></span></button>
       </section>
       ${available!==null?`<section class="card dashboard-available"><div class="row between"><div><div class="dashboard-label">Disponible real</div><strong>${fmt(available,currency)}</strong></div><button class="text-action" data-route="diagnosis">Revisar</button></div><div class="small muted">Tu base real para tomar decisiones este mes.</div></section>`:`<section class="card dashboard-callout"><div><strong>Completa tu diagnóstico financiero</strong><div class="small muted">Así la app podrá decirte cuánto tienes realmente disponible.</div></div><button class="btn inline" data-route="diagnosis">Empezar</button></section>`}
-      <section class="card dashboard-progress-card" data-route="reserve">
-        <div class="row between"><div><div class="dashboard-label">Ahorro y metas</div><strong>${fmt(savingsCurrent,currency)}${savingsTarget?` <small class="muted">de ${fmt(savingsTarget,currency)}</small>`:''}</strong></div><span class="dashboard-arrow">›</span></div>
-        <div class="dashboard-progress"><span style="width:${savingsPct}%"></span></div><div class="small muted">${savingsTarget?`${savingsPct}% del objetivo combinado`:'Crea tu reserva o una meta para empezar'}</div>
-      </section>
+      <section class="card dashboard-progress-card" data-route="reserve"><div class="row between"><div><div class="dashboard-label">Ahorro y metas</div><strong>${fmt(savingsCurrent,currency)}${savingsTarget?` <small class="muted">de ${fmt(savingsTarget,currency)}</small>`:''}</strong></div><span class="dashboard-arrow">›</span></div><div class="dashboard-progress"><span style="width:${savingsPct}%"></span></div><div class="small muted">${savingsTarget?`${savingsPct}% del objetivo combinado`:'Crea tu reserva o una meta para empezar'}</div></section>
       <section class="dashboard-pair">
         <button class="dashboard-mini debt-card" data-route="debts"><span class="dashboard-icon">▤</span><span><small>Deudas</small><strong>${fmt(debtTotal,currency)}</strong><em>${activeDebts.length} activa${activeDebts.length===1?'':'s'}</em></span></button>
-        <button class="dashboard-mini investment-card" id="wealthNavInvestment"><span class="dashboard-icon">↗</span><span><small>Inversiones</small><strong>${fmt(portfolio.currentValue,currency)}</strong><em>${activeInvestments.length} posición${activeInvestments.length===1?'':'es'}</em></span></button>
+        <button class="dashboard-mini investment-card" id="wealthNavInvestment"><span class="dashboard-icon">↗</span><span><small>Inversiones</small><strong>${fmt(portfolio.total,currency)}</strong><em>${activeInvestments.length} posición${activeInvestments.length===1?'':'es'}</em></span></button>
       </section>
       <section class="dashboard-section-head"><h3>Acciones rápidas</h3></section>
-      <section class="dashboard-actions">
-        <button data-route="transactions"><span>＋</span><small>Movimiento</small></button>
-        <button data-route="reserve"><span>◎</span><small>Ahorrar</small></button>
-        <button data-route="debts"><span>▤</span><small>Deuda</small></button>
-        <button id="wealthNavAction"><span>◈</span><small>Patrimonio</small></button>
-      </section>
+      <section class="dashboard-actions"><button data-route="transactions"><span>＋</span><small>Movimiento</small></button><button data-route="reserve"><span>◎</span><small>Ahorrar</small></button><button data-route="debts"><span>▤</span><small>Deuda</small></button><button id="wealthNavAction"><span>◈</span><small>Patrimonio</small></button></section>
       ${recent.length?`<section class="card dashboard-recent"><div class="row between"><h3>Últimos movimientos</h3><button class="text-action" data-route="transactions">Ver todos</button></div>${recent.map(x=>`<div class="dashboard-tx"><span class="tx-dot ${x.type}">${x.type==='income'?'↑':'↓'}</span><span class="tx-copy"><strong>${esc(x.note||x.category||'Movimiento')}</strong><small>${esc(x.category||'')}</small></span><strong class="${x.type==='income'?'income-money':'expense-money'}">${x.type==='income'?'+':'-'}${fmt(Math.abs(num(x.amount)),currency)}</strong></div>`).join('')}</section>`:''}
     `;
     main.dataset.dashboardUi='1';
     ['wealthNavShortcut','wealthNavInvestment','wealthNavAction'].forEach(id=>document.getElementById(id)?.addEventListener('click',()=>document.getElementById('wealthNav')?.click()));
-  } finally { rendering=false; }
+  } finally {rendering=false;}
 }
 
-const observer=new MutationObserver(()=>{
-  if(!isHome())return;
-  if(main.dataset.dashboardUi==='1')return;
-  clearTimeout(window.__miDineroDashboardTimer);
-  window.__miDineroDashboardTimer=setTimeout(buildDashboard,20);
-});
+const observer=new MutationObserver(()=>{if(!isHome())return;if(main.dataset.dashboardUi==='1')return;clearTimeout(window.__miDineroDashboardTimer);window.__miDineroDashboardTimer=setTimeout(buildDashboard,20);});
 observer.observe(main,{childList:true,subtree:false});
 observer.observe(document.querySelector('#bottomNav'),{attributes:true,subtree:true,attributeFilter:['class']});
 setTimeout(buildDashboard,80);
