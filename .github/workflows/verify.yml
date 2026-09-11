@@ -2,7 +2,7 @@ name: Verificar Mi Dinero
 
 on:
   push:
-    branches: [ main, parte-8-estabilidad ]
+    branches: [ main, parte-8-estabilidad, redesign-ui ]
   pull_request:
     branches: [ main ]
 
@@ -24,6 +24,9 @@ jobs:
           node --check src/sync.js
           node --check src/portfolio.js
           node --check src/wealth-ui.js
+          node --check src/dashboard-ui.js
+          node --check src/movements-ui.js
+          node --check src/sections-ui.js
           node --check src/integrity.js
           node --check src/startup-guard.js
       - name: Verificar estructura y cálculos
