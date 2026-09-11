@@ -1,5 +1,5 @@
-const CACHE='mi-dinero-redesign-v2';
-const ASSETS=['./','./index.html','./styles.css','./dashboard.css','./movements.css','./manifest.webmanifest','./icons/icon.svg','./src/startup-guard.js','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js','./src/dashboard-ui.js','./src/movements-ui.js','./src/integrity.js'];
+const CACHE='mi-dinero-redesign-v3';
+const ASSETS=['./','./index.html','./styles.css','./dashboard.css','./movements.css','./sections.css','./manifest.webmanifest','./icons/icon.svg','./src/startup-guard.js','./src/app.js','./src/db.js','./src/security.js','./src/sync.js','./src/portfolio.js','./src/wealth-ui.js','./src/dashboard-ui.js','./src/movements-ui.js','./src/sections-ui.js','./src/integrity.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
