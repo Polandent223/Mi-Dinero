@@ -29,11 +29,21 @@ export async function exportAll({includeBackups=false}={}){
 function validateImport(data){
   if(!data||data.app!=='Mi Dinero Personal'||!data.stores||typeof data.stores!=='object') throw new Error('El respaldo no corresponde a Mi Dinero.');
   const schema=Number(data.schema||0);if(!Number.isInteger(schema)||schema<1||schema>DB_VERSION) throw new Error('La versión del respaldo no es compatible con esta versión de Mi Dinero.');
-  for(const [name,items] of Object.entries(data.stores)){if(!STORES.includes(name))continue;if(!Array.isArray(items))throw new Error(`El respaldo contiene datos inválidos en ${name}.`);for(const item of items){if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id)throw new Error(`El respaldo contiene un registro inválido en ${name}.`);}}
+  for(const [name,items] of Object.entries(data.stores)){
+    if(!STORES.includes(name))continue;
+    if(!Array.isArray(items))throw new Error(`El respaldo contiene datos inválidos en ${name}.`);
+    const ids=new Set();
+    for(const item of items){
+      if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id)throw new Error(`El respaldo contiene un registro inválido en ${name}.`);
+      if(ids.has(item.id))throw new Error(`El respaldo contiene identificadores duplicados en ${name}.`);
+      ids.add(item.id);
+    }
+  }
   return true;
 }
 export async function importAll(data){
   validateImport(data);
+  await createLocalSnapshot('before_restore');
   const db=await openDB();
   const targetStores=STORES.filter(s=>s!=='backups');
   return new Promise((resolve,reject)=>{
@@ -50,7 +60,7 @@ export async function importAll(data){
 }
 export async function createLocalSnapshot(reason='automatic'){
   const snapshot=await exportAll({includeBackups:false});
-  const item={id:`snapshot_${Date.now()}`,reason,createdAt:new Date().toISOString(),snapshot};
+  const item={id:`snapshot_${Date.now()}_${crypto.randomUUID?.()||Math.random().toString(36).slice(2)}`,reason,createdAt:new Date().toISOString(),snapshot};
   await put('backups',item);
   const items=(await all('backups')).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
   for(const old of items.slice(5)) await del('backups',old.id);
