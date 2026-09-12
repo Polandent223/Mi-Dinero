@@ -5,12 +5,12 @@ import {netWorth,portfolioSummary,investmentReadiness} from '../src/portfolio.js
 const required=[
   'index.html','styles.css','dashboard.css','movements.css','sections.css','manifest.webmanifest','sw.js',
   'src/app.js','src/db.js','src/security.js','src/sync.js','src/portfolio.js','src/wealth-ui.js',
-  'src/dashboard-ui.js','src/movements-ui.js','src/sections-ui.js','src/startup-guard.js','src/integrity.js'
+  'src/dashboard-ui.js','src/movements-ui.js','src/sections-ui.js','src/startup-guard.js','src/integrity.js','src/integrity-ui.js'
 ];
 for(const file of required) assert.ok(fs.existsSync(file),`Falta ${file}`);
 
 const html=fs.readFileSync('index.html','utf8');
-for(const asset of ['dashboard.css','movements.css','sections.css','src/startup-guard.js','src/app.js','src/wealth-ui.js','src/dashboard-ui.js','src/movements-ui.js','src/sections-ui.js','src/integrity.js']){
+for(const asset of ['dashboard.css','movements.css','sections.css','src/startup-guard.js','src/app.js','src/wealth-ui.js','src/dashboard-ui.js','src/movements-ui.js','src/sections-ui.js','src/integrity.js','src/integrity-ui.js']){
   assert.ok(html.includes(asset),`index.html no carga ${asset}`);
 }
 
@@ -18,6 +18,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 for(const file of required.filter(x=>x!=='sw.js')) assert.ok(sw.includes(`./${file}`),`Service Worker no precarga ${file}`);
 assert.ok(sw.includes("event.request.mode==='navigate'"),'Service Worker debe limitar el fallback HTML a navegaciones');
 assert.ok(sw.includes('status:503'),'Service Worker debe responder 503 si falta un recurso offline');
+assert.ok(sw.includes("mi-dinero-redesign-v8"),'La PWA debe distribuir la versión actual del panel de integridad');
 
 const db=fs.readFileSync('src/db.js','utf8');
 assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración debe crear snapshot previo');
@@ -32,6 +33,11 @@ assert.ok(security.includes("pkg.version!==1"),'La restauración cifrada debe va
 assert.ok(security.includes("pkg.kdf!=='PBKDF2-SHA256'"),'La restauración cifrada debe validar el KDF');
 assert.ok(security.includes('salt.length!==16'),'La restauración cifrada debe validar el salt');
 assert.ok(security.includes('iv.length!==12'),'La restauración cifrada debe validar el IV');
+
+const integrityUI=fs.readFileSync('src/integrity-ui.js','utf8');
+assert.ok(integrityUI.includes('runIntegrityCheck'),'Ajustes debe permitir ejecutar una revisión de integridad');
+assert.ok(integrityUI.includes('integrityReport'),'Ajustes debe mostrar el último informe de integridad');
+assert.ok(integrityUI.includes('Revisar ahora'),'Ajustes debe exponer una acción visible de revisión');
 
 const nw=netWorth({assets:[{value:1000}],reserveCurrent:500,investments:[{currentValue:750}],liabilities:[{balance:250}],debts:[{balance:300}]});
 assert.equal(nw.assetTotal,2250);
@@ -61,4 +67,4 @@ const manualDebtReview=investmentReadiness({reserveCurrent:3000,reserveMonthlyEs
 assert.equal(manualDebtReview.checks[1].ok,null);
 assert.equal(manualDebtReview.ready,false);
 
-console.log('Mi Dinero: verificación estructural, offline, restauración, seguridad y financiera OK');
+console.log('Mi Dinero: verificación estructural, offline, restauración, seguridad, integridad y financiera OK');
