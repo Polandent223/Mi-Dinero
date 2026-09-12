@@ -24,6 +24,15 @@ assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración
 assert.ok(db.includes('ids.has(item.id)'),'La restauración debe rechazar IDs duplicados');
 assert.ok(db.includes('crypto.randomUUID'),'Los snapshots deben evitar colisiones de identificador');
 
+const security=fs.readFileSync('src/security.js','utf8');
+assert.ok(security.includes('BACKUP_MIN_ITERATIONS=100000'),'El respaldo debe tener un mínimo de iteraciones KDF');
+assert.ok(security.includes('BACKUP_MAX_ITERATIONS=1000000'),'El respaldo debe limitar iteraciones KDF para evitar abuso');
+assert.ok(security.includes('MAX_BACKUP_TEXT_SIZE=50_000_000'),'La importación cifrada debe limitar tamaños anómalos');
+assert.ok(security.includes("pkg.version!==1"),'La restauración cifrada debe validar la versión del paquete');
+assert.ok(security.includes("pkg.kdf!=='PBKDF2-SHA256'"),'La restauración cifrada debe validar el KDF');
+assert.ok(security.includes('salt.length!==16'),'La restauración cifrada debe validar el salt');
+assert.ok(security.includes('iv.length!==12'),'La restauración cifrada debe validar el IV');
+
 const nw=netWorth({assets:[{value:1000}],reserveCurrent:500,investments:[{currentValue:750}],liabilities:[{balance:250}],debts:[{balance:300}]});
 assert.equal(nw.assetTotal,2250);
 assert.equal(nw.liabilityTotal,550);
@@ -52,4 +61,4 @@ const manualDebtReview=investmentReadiness({reserveCurrent:3000,reserveMonthlyEs
 assert.equal(manualDebtReview.checks[1].ok,null);
 assert.equal(manualDebtReview.ready,false);
 
-console.log('Mi Dinero: verificación estructural, offline, restauración y financiera OK');
+console.log('Mi Dinero: verificación estructural, offline, restauración, seguridad y financiera OK');
