@@ -19,6 +19,11 @@ for(const file of required.filter(x=>x!=='sw.js')) assert.ok(sw.includes(`./${fi
 assert.ok(sw.includes("event.request.mode==='navigate'"),'Service Worker debe limitar el fallback HTML a navegaciones');
 assert.ok(sw.includes('status:503'),'Service Worker debe responder 503 si falta un recurso offline');
 
+const db=fs.readFileSync('src/db.js','utf8');
+assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración debe crear snapshot previo');
+assert.ok(db.includes('ids.has(item.id)'),'La restauración debe rechazar IDs duplicados');
+assert.ok(db.includes('crypto.randomUUID'),'Los snapshots deben evitar colisiones de identificador');
+
 const nw=netWorth({assets:[{value:1000}],reserveCurrent:500,investments:[{currentValue:750}],liabilities:[{balance:250}],debts:[{balance:300}]});
 assert.equal(nw.assetTotal,2250);
 assert.equal(nw.liabilityTotal,550);
@@ -47,4 +52,4 @@ const manualDebtReview=investmentReadiness({reserveCurrent:3000,reserveMonthlyEs
 assert.equal(manualDebtReview.checks[1].ok,null);
 assert.equal(manualDebtReview.ready,false);
 
-console.log('Mi Dinero: verificación estructural, offline y financiera OK');
+console.log('Mi Dinero: verificación estructural, offline, restauración y financiera OK');
