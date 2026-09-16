@@ -66,4 +66,19 @@ export async function createLocalSnapshot(reason='automatic'){
   for(const old of items.slice(5)) await del('backups',old.id);
   return item;
 }
+export async function resetAllSafely(reason='before_reset_all'){
+  const snapshot=await createLocalSnapshot(reason);
+  const db=await openDB();
+  const targetStores=STORES.filter(s=>s!=='backups');
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(targetStores,'readwrite');
+    tx.oncomplete=()=>resolve(true);
+    tx.onerror=()=>reject(tx.error||new Error('No se pudo restablecer Mi Dinero.'));
+    tx.onabort=()=>reject(tx.error||new Error('El restablecimiento fue cancelado para proteger tus datos.'));
+    try{for(const s of targetStores)tx.objectStore(s).clear()}catch(err){tx.abort();reject(err)}
+  });
+  const preserved=await get('backups',snapshot.id);
+  if(!preserved)throw new Error('No se pudo conservar la copia de recuperación. El restablecimiento fue bloqueado.');
+  return snapshot;
+}
 export {STORES};
