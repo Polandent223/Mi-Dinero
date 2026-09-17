@@ -61,7 +61,7 @@ const dashboard=fs.readFileSync('src/dashboard-ui.js','utf8');
 assert.ok(dashboard.includes('worth.assetTotal'),'Dashboard debe mostrar assetTotal del motor de patrimonio');
 assert.ok(dashboard.includes('worth.liabilityTotal'),'Dashboard debe mostrar liabilityTotal del motor de patrimonio');
 assert.ok(dashboard.includes('portfolio.total'),'Dashboard debe mostrar total de cartera');
-assert.ok(dashboard.includes("!nav.classList.contains('hidden')"),'Dashboard no debe sustituir la pantalla de PIN cuando la sesión está bloqueada');
+assert.ok(dashboard.includes("!bottomNav.classList.contains('hidden')"),'Dashboard no debe sustituir la pantalla de PIN cuando la sesión está bloqueada');
 assert.ok(!dashboard.includes('worth.totalAssets'),'Dashboard no debe usar totalAssets inexistente');
 assert.ok(!dashboard.includes('worth.totalLiabilities'),'Dashboard no debe usar totalLiabilities inexistente');
 assert.ok(!dashboard.includes('portfolio.currentValue'),'Dashboard no debe usar currentValue inexistente en portfolioSummary');
