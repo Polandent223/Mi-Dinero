@@ -18,7 +18,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 for(const file of required.filter(x=>x!=='sw.js')) assert.ok(sw.includes(`./${file}`),`Service Worker no precarga ${file}`);
 assert.ok(sw.includes("event.request.mode==='navigate'"),'Service Worker debe limitar el fallback HTML a navegaciones');
 assert.ok(sw.includes('status:503'),'Service Worker debe responder 503 si falta un recurso offline');
-assert.ok(sw.includes("mi-dinero-redesign-v9"),'La PWA debe distribuir la versión con restablecimiento seguro');
+assert.ok(sw.includes("mi-dinero-redesign-v10"),'La PWA debe distribuir la versión con bloqueo y restablecimiento seguros');
 
 const db=fs.readFileSync('src/db.js','utf8');
 assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración debe crear snapshot previo');
@@ -61,6 +61,7 @@ const dashboard=fs.readFileSync('src/dashboard-ui.js','utf8');
 assert.ok(dashboard.includes('worth.assetTotal'),'Dashboard debe mostrar assetTotal del motor de patrimonio');
 assert.ok(dashboard.includes('worth.liabilityTotal'),'Dashboard debe mostrar liabilityTotal del motor de patrimonio');
 assert.ok(dashboard.includes('portfolio.total'),'Dashboard debe mostrar total de cartera');
+assert.ok(dashboard.includes("!nav.classList.contains('hidden')"),'Dashboard no debe sustituir la pantalla de PIN cuando la sesión está bloqueada');
 assert.ok(!dashboard.includes('worth.totalAssets'),'Dashboard no debe usar totalAssets inexistente');
 assert.ok(!dashboard.includes('worth.totalLiabilities'),'Dashboard no debe usar totalLiabilities inexistente');
 assert.ok(!dashboard.includes('portfolio.currentValue'),'Dashboard no debe usar currentValue inexistente en portfolioSummary');
@@ -75,4 +76,4 @@ const manualDebtReview=investmentReadiness({reserveCurrent:3000,reserveMonthlyEs
 assert.equal(manualDebtReview.checks[1].ok,null);
 assert.equal(manualDebtReview.ready,false);
 
-console.log('Mi Dinero: verificación estructural, offline, restauración, restablecimiento, seguridad, integridad y financiera OK');
+console.log('Mi Dinero: verificación estructural, offline, bloqueo, restauración, restablecimiento, seguridad, integridad y financiera OK');
