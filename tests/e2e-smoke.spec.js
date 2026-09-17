@@ -12,8 +12,13 @@ test('flujo crítico: configurar, bloquear, entrar y recargar offline',async({pa
   await expect(page.locator('#main')).toContainText('Prueba E2E');
 
   await page.reload();
+  // lockView se vuelve a pintar mientras se leen ajustes; esperar a que el DOM se estabilice
+  // evita escribir sobre un input que acaba de ser reemplazado por render().
   await expect(page.locator('#unlockForm')).toBeVisible();
-  await page.locator('#unlockForm input[name="pin"]').fill('2468');
+  await page.waitForTimeout(250);
+  const pin=page.locator('#unlockForm input[name="pin"]');
+  await expect(pin).toBeVisible();
+  await pin.fill('2468');
   await page.locator('#unlockForm button[type="submit"]').click();
   await expect(page.locator('#bottomNav')).toBeVisible();
 
