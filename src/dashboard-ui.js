@@ -2,6 +2,7 @@ import {get,all} from './db.js';
 import {netWorth,portfolioSummary} from './portfolio.js';
 
 const main=document.querySelector('#main');
+const bottomNav=document.querySelector('#bottomNav');
 const PROFILE_ID='owner',SETTINGS_ID='main',DIAGNOSIS_ID='current';
 let rendering=false;
 
@@ -10,7 +11,10 @@ function fmt(v,c='USD'){try{return new Intl.NumberFormat('es-VE',{style:'currenc
 function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]))}
 function monthKey(v){const d=new Date(`${v}T12:00:00`);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function todayISO(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
-function isHome(){return !!document.querySelector('#bottomNav .nav-item.active[data-route="home"]')}
+// Una ruta activa no significa que la sesión esté desbloqueada: al recargar,
+// app.js oculta la navegación antes de mostrar el PIN. No permitir que este
+// módulo sustituya esa pantalla de seguridad con el dashboard.
+function isHome(){return !!bottomNav&&!bottomNav.classList.contains('hidden')&&!!bottomNav.querySelector('.nav-item.active[data-route="home"]')}
 function diagnosisAvailable(d){if(!d?.completed)return null;const income=d.incomeType==='variable'?(()=>{const a=(d.variableMonths||[]).map(Number).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b).slice(0,3);return a.length===3?a.reduce((s,x)=>s+x,0)/3:0})():num(d.grossMonthly);const net=Math.max(0,income-num(d.taxes));const work=['transport','lunch','phone','tools','workOther'].reduce((a,k)=>a+num(d[k]),0);const adjusted=Math.max(0,net-work);const commitments=['housing','utilities','debtPayments','healthInsurance','education','commitmentOther'].reduce((a,k)=>a+num(d[k]),0);return adjusted-commitments}
 
 async function buildDashboard(){
@@ -69,5 +73,5 @@ async function buildDashboard(){
 
 const observer=new MutationObserver(()=>{if(!isHome())return;if(main.dataset.dashboardUi==='1')return;clearTimeout(window.__miDineroDashboardTimer);window.__miDineroDashboardTimer=setTimeout(buildDashboard,20);});
 observer.observe(main,{childList:true,subtree:false});
-observer.observe(document.querySelector('#bottomNav'),{attributes:true,subtree:true,attributeFilter:['class']});
+observer.observe(bottomNav,{attributes:true,subtree:true,attributeFilter:['class']});
 setTimeout(buildDashboard,80);
