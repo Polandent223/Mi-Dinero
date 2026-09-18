@@ -78,3 +78,44 @@ test('respaldo cifrado: exportar, descifrar y rechazar contraseña incorrecta',a
   expect(result.profileName).toBe('Perfil Cifrado');
   expect(result.wrongPasswordRejected).toBe(true);
 });
+
+
+test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',async({page})=>{
+  await setup(page,'Finanzas E2E');
+
+  await page.locator('button[data-route="diagnosis"]').first().click();
+  await expect(page.locator('#diagnosisForm')).toBeVisible();
+  await page.locator('#diagnosisForm input[name="grossMonthly"]').fill('2500');
+  await page.locator('#diagnosisForm input[name="taxes"]').fill('200');
+  await page.locator('#diagnosisForm button[type="submit"]').click();
+  await expect(page.locator('#bottomNav')).toBeVisible();
+
+  await page.locator('#bottomNav [data-route="transactions"]').click();
+  await expect(page.locator('#transactionForm')).toBeVisible();
+  await page.locator('#transactionForm input[name="amount"]').fill('75.50');
+  await page.locator('#transactionForm input[name="note"]').fill('Compra prueba persistencia');
+  await page.locator('#transactionForm button[type="submit"]').click();
+  await expect(page.locator('#main')).toContainText('Compra prueba persistencia');
+
+  const stored=await page.evaluate(async()=>{
+    const db=await import('/src/db.js');
+    const diagnosis=await db.get('diagnosis','current');
+    const transactions=await db.all('transactions');
+    return {
+      gross:diagnosis?.calculated?.gross,
+      available:diagnosis?.calculated?.available,
+      movement:transactions.find(x=>x.note==='Compra prueba persistencia')?.amount
+    };
+  });
+  expect(stored.gross).toBe(2500);
+  expect(stored.available).toBe(2300);
+  expect(stored.movement).toBe(75.5);
+
+  await page.reload();
+  await expect(page.locator('#unlockForm')).toBeVisible();
+  await page.waitForTimeout(250);
+  await page.locator('#unlockForm input[name="pin"]').fill('2468');
+  await page.locator('#unlockForm button[type="submit"]').click();
+  await page.locator('#bottomNav [data-route="transactions"]').click();
+  await expect(page.locator('#main')).toContainText('Compra prueba persistencia');
+});
