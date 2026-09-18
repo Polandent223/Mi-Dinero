@@ -31,5 +31,6 @@ jobs:
           node --check src/integrity-ui.js
           node --check src/startup-guard.js
           node --check src/reset-guard.js
+          node --check src/recovery-ui.js
       - name: Verificar estructura y cálculos
         run: node scripts/verify.mjs
