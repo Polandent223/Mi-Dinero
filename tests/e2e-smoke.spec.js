@@ -96,7 +96,7 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
   await page.locator('#transactionForm input[name="note"]').fill('Compra prueba persistencia');
   await page.locator('#transactionForm').evaluate(form=>form.requestSubmit());
 
-  const stored=await expect.poll(async()=>page.evaluate(async()=>{
+  await expect.poll(async()=>page.evaluate(async()=>{
     const db=await import('/src/db.js');
     const diagnosis=await db.get('diagnosis','current');
     const transactions=await db.all('transactions');
@@ -108,20 +108,6 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
   })).toEqual({gross:2500,available:2300,movement:75.5});
 
   await expect(page.locator('#main')).toContainText('Compra prueba persistencia');
-
-  const stored=await page.evaluate(async()=>{
-    const db=await import('/src/db.js');
-    const diagnosis=await db.get('diagnosis','current');
-    const transactions=await db.all('transactions');
-    return {
-      gross:diagnosis?.calculated?.gross,
-      available:diagnosis?.calculated?.available,
-      movement:transactions.find(x=>x.note==='Compra prueba persistencia')?.amount
-    };
-  });
-  expect(stored.gross).toBe(2500);
-  expect(stored.available).toBe(2300);
-  expect(stored.movement).toBe(75.5);
 
   await page.reload();
   await expect(page.locator('#unlockForm')).toBeVisible();
