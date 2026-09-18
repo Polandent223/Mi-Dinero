@@ -55,3 +55,26 @@ test('recuperación local: restablecer y recuperar el perfil desde snapshot',asy
   await expect(page.locator('#bottomNav')).toBeVisible();
   await expect(page.locator('#main')).toContainText('Perfil Recuperable');
 });
+
+
+test('respaldo cifrado: exportar, descifrar y rechazar contraseña incorrecta',async({page})=>{
+  await setup(page,'Perfil Cifrado');
+  const result=await page.evaluate(async()=>{
+    const db=await import('/src/db.js');
+    const security=await import('/src/security.js');
+    const original=await db.exportAll();
+    const encrypted=await security.encryptBackup(original,'ClaveSegura-2468');
+    const restored=await security.decryptBackup(encrypted,'ClaveSegura-2468');
+    let wrongPasswordRejected=false;
+    try{await security.decryptBackup(encrypted,'ClaveIncorrecta-9999')}
+    catch{wrongPasswordRejected=true}
+    return {
+      format:JSON.parse(encrypted).format,
+      profileName:restored.stores.profile?.find(x=>x.id==='owner')?.name,
+      wrongPasswordRejected
+    };
+  });
+  expect(result.format).toBe('MiDineroEncryptedBackup');
+  expect(result.profileName).toBe('Perfil Cifrado');
+  expect(result.wrongPasswordRejected).toBe(true);
+});
