@@ -18,7 +18,7 @@ const sw=fs.readFileSync('sw.js','utf8');
 for(const file of required.filter(x=>x!=='sw.js')) assert.ok(sw.includes(`./${file}`),`Service Worker no precarga ${file}`);
 assert.ok(sw.includes("event.request.mode==='navigate'"),'Service Worker debe limitar el fallback HTML a navegaciones');
 assert.ok(sw.includes('status:503'),'Service Worker debe responder 503 si falta un recurso offline');
-assert.ok(sw.includes("mi-dinero-redesign-v11"),'La PWA debe distribuir la versión con bloqueo y restablecimiento seguros');
+assert.ok(sw.includes("mi-dinero-redesign-v12"),'La PWA debe distribuir la versión con bloqueo y restablecimiento seguros');
 
 const db=fs.readFileSync('src/db.js','utf8');
 assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración debe crear snapshot previo');
