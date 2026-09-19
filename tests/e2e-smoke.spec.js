@@ -124,3 +124,36 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
   await page.locator('#bottomNav [data-route="transactions"]').click();
   await expect(page.locator('#main')).toContainText('Compra prueba persistencia');
 });
+
+
+test('presupuesto: guardar límites mensuales y persistir tras recarga', async ({page})=>{
+  await page.goto('/');
+  await page.locator('#setupForm input[name="name"]').fill('Perfil Presupuesto');
+  await page.locator('#setupForm input[name="pin"]').fill('2468');
+  await page.locator('#setupForm input[name="pin2"]').fill('2468');
+  await page.locator('#setupForm button[type="submit"]').click();
+  await expect(page.locator('#bottomNav')).toBeVisible();
+
+  await page.locator('[data-route="budget"]').click();
+  const form=page.locator('#budgetForm');
+  await expect(form).toBeVisible();
+  const firstLimit=form.locator('input[name^="limit_"]').first();
+  const limitName=await firstLimit.getAttribute('name');
+  expect(limitName).toBeTruthy();
+  await firstLimit.fill('350');
+  await form.locator('button[type="submit"]').click();
+
+  await expect.poll(async()=>page.evaluate(async(name)=>{
+    const db=await import('/src/db.js');
+    const rows=await db.all('budgets');
+    if(!rows.length)return null;
+    const key=name.replace('limit_','');
+    return Number(rows[0]?.limits?.[key]);
+  },limitName)).toBe(350);
+
+  await page.reload();
+  await page.locator('#unlockForm input[name="pin"]').fill('2468');
+  await page.locator('#unlockForm button[type="submit"]').click();
+  await page.locator('[data-route="budget"]').click();
+  await expect(page.locator(`#budgetForm input[name="${limitName}"]`)).toHaveValue('350');
+});
