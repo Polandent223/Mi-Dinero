@@ -104,7 +104,7 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
   const submitTrace=await page.evaluate(()=>{
     window.__e2eSubmitTrace={seen:false,prevented:null,formId:null};
     document.addEventListener('submit',e=>{
-      window.__e2eSubmitTrace={seen:true,prevented:e.defaultPrevented,formId:e.target?.id||null};
+      window.__e2eSubmitTrace={seen:true,prevented:e.defaultPrevented,formId:e.target?.getAttribute('id')||null};
       queueMicrotask(()=>{window.__e2eSubmitTrace.prevented=e.defaultPrevented});
     },true);
     return true;
