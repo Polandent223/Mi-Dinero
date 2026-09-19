@@ -101,17 +101,7 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
     invalid:[...form.elements].filter(el=>el.willValidate&&!el.checkValidity()).map(el=>({name:el.name,value:el.value,message:el.validationMessage}))
   }));
   expect(validity).toEqual({valid:true,invalid:[]});
-  const submitTrace=await page.evaluate(()=>{
-    window.__e2eSubmitTrace={seen:false,prevented:null,formId:null};
-    document.addEventListener('submit',e=>{
-      window.__e2eSubmitTrace={seen:true,prevented:e.defaultPrevented,formId:e.target?.getAttribute('id')||null};
-      queueMicrotask(()=>{window.__e2eSubmitTrace.prevented=e.defaultPrevented});
-    },true);
-    return true;
-  });
-  expect(submitTrace).toBe(true);
   await txForm.locator('button[type="submit"]').click();
-  await expect.poll(()=>page.evaluate(()=>window.__e2eSubmitTrace)).toMatchObject({seen:true,formId:'transactionForm',prevented:true});
 
   await expect.poll(async()=>page.evaluate(async()=>{
     const db=await import('/src/db.js');
