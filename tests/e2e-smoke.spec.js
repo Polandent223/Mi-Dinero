@@ -94,8 +94,14 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
   await expect(page.locator('#transactionForm')).toBeVisible();
   await page.locator('#transactionForm input[name="amount"]').fill('75.50');
   await page.locator('#transactionForm input[name="note"]').fill('Compra prueba persistencia');
-  await page.locator('#transactionForm button[type="submit"]').click();
-  await expect(page.locator('#transactionForm')).toBeVisible();
+  const txForm=page.locator('#transactionForm');
+  await expect(txForm).toBeVisible();
+  const validity=await txForm.evaluate(form=>({
+    valid:form.checkValidity(),
+    invalid:[...form.elements].filter(el=>el.willValidate&&!el.checkValidity()).map(el=>({name:el.name,value:el.value,message:el.validationMessage}))
+  }));
+  expect(validity).toEqual({valid:true,invalid:[]});
+  await txForm.locator('button[type="submit"]').click();
 
   await expect.poll(async()=>page.evaluate(async()=>{
     const db=await import('/src/db.js');
