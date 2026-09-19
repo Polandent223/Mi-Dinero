@@ -58,10 +58,12 @@ function calcDiagnosis(d){
 function inputMoney(name,label,value=''){return `<label>${label}</label><input name="${name}" inputmode="decimal" min="0" step="0.01" value="${value??''}" placeholder="0.00">`}
 
 async function bootstrap(){
-  if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js')}catch(e){console.warn(e)}}
+  // Registrar primero los manejadores críticos. El registro del Service Worker puede
+  // tardar o fallar y nunca debe dejar formularios financieros sin su submit handler.
+  document.addEventListener('click',onClick);document.addEventListener('submit',onSubmit);document.addEventListener('change',onChange);
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(e=>console.warn(e))}
   window.addEventListener('online',()=>{updateStatus();showToast('Internet disponible')});window.addEventListener('offline',()=>{updateStatus();showToast('Sigues trabajando sin internet')});
   ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,resetLockTimer,{passive:true}));
-  document.addEventListener('click',onClick);document.addEventListener('submit',onSubmit);document.addEventListener('change',onChange);
   await render();await updateStatus();
 }
 async function setupView(){return `<section class="card hero"><div class="eyebrow">Configuración inicial</div><h2>Tu sistema financiero personal.</h2><p class="muted">Funciona sin internet y tus datos se guardan primero en este dispositivo.</p></section><section class="card"><form id="setupForm"><label>Tu nombre</label><input name="name" required maxlength="50" placeholder="Tu nombre"><label>Moneda principal</label><select name="currency">${currencyOptions.map(c=>`<option>${c}</option>`).join('')}</select><label>PIN de acceso</label><input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required placeholder="4 a 8 números"><label>Repite el PIN</label><input name="pin2" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required><button class="btn" type="submit">Preparar Mi Dinero</button></form></section>`}
