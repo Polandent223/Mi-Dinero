@@ -127,12 +127,7 @@ test('finanzas esenciales: diagnóstico y movimiento persisten tras recarga',asy
 
 
 test('presupuesto: guardar límites mensuales y persistir tras recarga', async ({page})=>{
-  await page.goto('/');
-  await page.locator('#setupForm input[name="name"]').fill('Perfil Presupuesto');
-  await page.locator('#setupForm input[name="pin"]').fill('2468');
-  await page.locator('#setupForm input[name="pin2"]').fill('2468');
-  await page.locator('#setupForm button[type="submit"]').click();
-  await expect(page.locator('#bottomNav')).toBeVisible();
+  await setup(page,'Perfil Presupuesto');
 
   await page.locator('[data-route="budget"]').click();
   const form=page.locator('#budgetForm');
