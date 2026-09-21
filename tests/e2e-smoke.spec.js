@@ -152,3 +152,23 @@ test('presupuesto: guardar límites mensuales y persistir tras recarga', async (
   await page.locator('[data-route="budget"]').click();
   await expect(page.locator(`#budgetForm input[name="${limitName}"]`)).toHaveValue('350.00');
 });
+
+
+test('reserva: aporte enlazado y reversión conservan integridad', async ({page})=>{
+  await setup(page,'Perfil Reserva');
+  await page.locator('[data-route="goals"]').click();
+  const reserve=page.locator('#reserveForm');
+  await expect(reserve).toBeVisible();
+  await reserve.locator('input[name="monthlyEssential"]').fill('500');
+  await reserve.locator('select[name="targetMonths"]').selectOption('3');
+  await reserve.locator('input[name="currentAmount"]').fill('100');
+  await reserve.locator('button[type="submit"]').click();
+  page.once('dialog',d=>d.accept('50'));
+  await page.locator('[data-action="add-reserve"]').click();
+  const read=()=>page.evaluate(async()=>{const db=await import('/src/db.js');const r=await db.get('reserves','emergency');const cs=(await db.all('contributions')).filter(x=>!x.deletedAt&&x.destinationType==='reserve');const ts=(await db.all('transactions')).filter(x=>!x.deletedAt&&x.linkedContributionId);return {current:Number(r?.currentAmount),c:cs[0]||null,t:ts[0]||null}});
+  await expect.poll(async()=>Number((await read()).current)).toBe(150);
+  let s=await read(); expect(Number(s.c?.amount)).toBe(50); expect(Number(s.t?.amount)).toBe(50); expect(s.t?.linkedContributionId).toBe(s.c?.id);
+  await page.locator('[data-action="undo-contribution"]').first().click();
+  await expect.poll(async()=>Number((await read()).current)).toBe(100);
+  s=await read(); expect(s.c).toBeNull(); expect(s.t).toBeNull();
+});
