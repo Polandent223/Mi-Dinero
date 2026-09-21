@@ -168,6 +168,7 @@ test('reserva: aporte enlazado y reversión conservan integridad', async ({page}
   const read=()=>page.evaluate(async()=>{const db=await import('/src/db.js');const r=await db.get('reserves','emergency');const cs=(await db.all('contributions')).filter(x=>!x.deletedAt&&x.destinationType==='reserve');const ts=(await db.all('transactions')).filter(x=>!x.deletedAt&&x.linkedContributionId);return {current:Number(r?.currentAmount),c:cs[0]||null,t:ts[0]||null}});
   await expect.poll(async()=>Number((await read()).current)).toBe(150);
   let s=await read(); expect(Number(s.c?.amount)).toBe(50); expect(Number(s.t?.amount)).toBe(50); expect(s.t?.linkedContributionId).toBe(s.c?.id);
+  page.once('dialog',d=>d.accept());
   await page.locator('[data-action="undo-contribution"]').first().click();
   await expect.poll(async()=>Number((await read()).current)).toBe(100);
   s=await read(); expect(s.c).toBeNull(); expect(s.t).toBeNull();
