@@ -173,3 +173,27 @@ test('reserva: aporte enlazado y reversión conservan integridad', async ({page}
   await expect.poll(async()=>Number((await read()).current)).toBe(100);
   s=await read(); expect(s.c).toBeNull(); expect(s.t).toBeNull();
 });
+
+
+test('deudas: pago enlazado y reversión restauran saldo', async ({page})=>{
+  await setup(page,'Perfil Deudas');
+  await page.locator('#bottomNav [data-route="debts"]').click();
+  const form=page.locator('#debtForm');
+  await expect(form).toBeVisible();
+  await form.locator('input[name="name"]').fill('Tarjeta prueba');
+  await form.locator('input[name="balance"]').fill('1000');
+  await form.locator('input[name="annualRate"]').fill('24');
+  await form.locator('input[name="minPayment"]').fill('100');
+  await form.locator('button[type="submit"]').click();
+
+  page.once('dialog',d=>d.accept('200'));
+  await page.locator('[data-action="pay-debt"]').first().click();
+  const read=()=>page.evaluate(async()=>{const db=await import('/src/db.js');const ds=(await db.all('debts')).filter(x=>!x.deletedAt);const ps=(await db.all('debtPayments')).filter(x=>!x.deletedAt);const ts=(await db.all('transactions')).filter(x=>!x.deletedAt&&x.linkedDebtPaymentId);return {d:ds[0]||null,p:ps[0]||null,t:ts[0]||null}});
+  await expect.poll(async()=>Number((await read()).d?.balance)).toBe(800);
+  let s=await read(); expect(Number(s.p?.amount)).toBe(200); expect(Number(s.t?.amount)).toBe(200); expect(s.t?.linkedDebtPaymentId).toBe(s.p?.id); expect(s.p?.transactionId).toBe(s.t?.id);
+
+  page.once('dialog',d=>d.accept());
+  await page.locator('[data-action="undo-debt-payment"]').first().click();
+  await expect.poll(async()=>Number((await read()).d?.balance)).toBe(1000);
+  s=await read(); expect(s.p).toBeNull(); expect(s.t).toBeNull();
+});
