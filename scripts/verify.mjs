@@ -27,6 +27,7 @@ assert.ok(!app.includes('for(const s of STORES)await clear(s)'),'La app no debe 
 assert.ok(!app.includes("createLocalSnapshot('antes de restaurar respaldo externo')"),'La restauración externa no debe crear dos snapshots previos');
 assert.ok(db.includes("createLocalSnapshot('before_restore')"),'La restauración debe crear snapshot previo');
 assert.ok(db.includes('ids.has(item.id)'),'La restauración debe rechazar IDs duplicados');
+assert.ok(db.includes('MAX_IMPORT_RECORDS=100000'),'La restauración debe limitar la cantidad total de registros');
 assert.ok(db.includes('crypto.randomUUID'),'Los snapshots deben evitar colisiones de identificador');
 assert.ok(db.includes('export async function resetAllSafely'),'Debe existir un restablecimiento protegido');
 assert.ok(db.includes("STORES.filter(s=>s!=='backups')"),'El restablecimiento debe preservar la bóveda de snapshots');
