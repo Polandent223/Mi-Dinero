@@ -156,7 +156,7 @@ test('presupuesto: guardar límites mensuales y persistir tras recarga', async (
 
 test('reserva: aporte enlazado y reversión conservan integridad', async ({page})=>{
   await setup(page,'Perfil Reserva');
-  await page.locator('[data-route="reserve"]').click();
+  await page.locator('#bottomNav [data-route="reserve"]').click();
   const reserve=page.locator('#reserveForm');
   await expect(reserve).toBeVisible();
   await reserve.locator('input[name="monthlyEssential"]').fill('500');
