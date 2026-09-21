@@ -150,5 +150,5 @@ test('presupuesto: guardar límites mensuales y persistir tras recarga', async (
   await page.locator('#unlockForm input[name="pin"]').fill('2468');
   await page.locator('#unlockForm button[type="submit"]').click();
   await page.locator('[data-route="budget"]').click();
-  await expect(page.locator(`#budgetForm input[name="${limitName}"]`)).toHaveValue('350');
+  await expect(page.locator(`#budgetForm input[name="${limitName}"]`)).toHaveValue('350.00');
 });
