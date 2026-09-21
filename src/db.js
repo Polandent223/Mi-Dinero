@@ -27,11 +27,13 @@ export async function exportAll({includeBackups=false}={}){
   return data;
 }
 function validateImport(data){
+  const MAX_IMPORT_RECORDS=100000;
+  let totalRecords=0;
   if(!data||data.app!=='Mi Dinero Personal'||!data.stores||typeof data.stores!=='object') throw new Error('El respaldo no corresponde a Mi Dinero.');
   const schema=Number(data.schema||0);if(!Number.isInteger(schema)||schema<1||schema>DB_VERSION) throw new Error('La versión del respaldo no es compatible con esta versión de Mi Dinero.');
   for(const [name,items] of Object.entries(data.stores)){
     if(!STORES.includes(name))continue;
-    if(!Array.isArray(items))throw new Error(`El respaldo contiene datos inválidos en ${name}.`);
+    if(!Array.isArray(items))throw new Error(`El respaldo contiene datos inválidos en ${name}.`);\n    totalRecords+=items.length;if(totalRecords>MAX_IMPORT_RECORDS)throw new Error('El respaldo contiene demasiados registros para restaurarlo de forma segura.');
     const ids=new Set();
     for(const item of items){
       if(!item||typeof item!=='object'||Array.isArray(item)||typeof item.id!=='string'||!item.id)throw new Error(`El respaldo contiene un registro inválido en ${name}.`);
