@@ -24,6 +24,9 @@ jobs:
           cp index.html styles.css dashboard.css movements.css sections.css manifest.webmanifest sw.js android/app/src/main/assets/www/
           cp src/*.js android/app/src/main/assets/www/src/
           cp icons/icon.svg android/app/src/main/assets/www/icons/
+      - name: Validar proyecto Android
+        working-directory: android
+        run: gradle :app:lintDebug :app:testDebugUnitTest
       - name: Compilar APK debug
         working-directory: android
         run: gradle :app:assembleDebug
