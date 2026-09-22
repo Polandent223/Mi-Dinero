@@ -5,8 +5,6 @@ import android.webkit.JavascriptInterface;
 import android.util.Base64;
 import java.io.File;
 import java.io.FileOutputStream;
-import androidx.core.content.FileProvider;
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,7 +36,14 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new WebViewClientCompat() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return loader.shouldInterceptRequest(request.getUrl());
+                Uri uri = request.getUrl();
+                if (!"appassets.androidplatform.net".equals(uri.getHost())) return new WebResourceResponse(null, null, null);
+                return loader.shouldInterceptRequest(uri);
+            }
+
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                return !"appassets.androidplatform.net".equals(uri.getHost());
             }
         });
         webView.addJavascriptInterface(new Object() {
