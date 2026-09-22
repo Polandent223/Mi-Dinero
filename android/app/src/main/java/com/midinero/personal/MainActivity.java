@@ -3,8 +3,8 @@ package com.midinero.personal;
 import android.annotation.SuppressLint;
 import android.webkit.JavascriptInterface;
 import android.util.Base64;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,8 +21,11 @@ import androidx.webkit.WebViewClientCompat;
 
 public class MainActivity extends AppCompatActivity {
     private static final int FILE_CHOOSER_REQUEST = 1001;
+    private static final int BACKUP_CREATE_REQUEST = 1002;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private byte[] pendingBackup;
+    private String pendingBackupName;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override protected void onCreate(Bundle state) {
@@ -49,13 +52,19 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new Object() {
             @JavascriptInterface public void saveBackup(String base64, String filename) {
                 try {
-                    byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
-                    File dir = new File(getExternalFilesDir(null), "backups");
-                    if (!dir.exists()) dir.mkdirs();
-                    File out = new File(dir, filename.replaceAll("[^a-zA-Z0-9._-]", "_"));
-                    try (FileOutputStream fos = new FileOutputStream(out)) { fos.write(bytes); }
-                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this, "Respaldo guardado en almacenamiento de la app", android.widget.Toast.LENGTH_LONG).show());
-                } catch (Exception ignored) {}
+                    pendingBackup = Base64.decode(base64, Base64.DEFAULT);
+                    pendingBackupName = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+                    runOnUiThread(() -> {
+                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("application/octet-stream");
+                        intent.putExtra(Intent.EXTRA_TITLE, pendingBackupName);
+                        startActivityForResult(intent, BACKUP_CREATE_REQUEST);
+                    });
+                } catch (Exception ex) {
+                    pendingBackup = null;
+                    pendingBackupName = null;
+                }
             }
         }, "MiDineroAndroid");
         webView.setWebChromeClient(new WebChromeClient() {
@@ -98,10 +107,26 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != FILE_CHOOSER_REQUEST || fileCallback == null) return;
-        Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-        fileCallback.onReceiveValue(result);
-        fileCallback = null;
+        if (requestCode == BACKUP_CREATE_REQUEST) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingBackup != null) {
+                try (OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                    if (out != null) {
+                        out.write(pendingBackup);
+                        android.widget.Toast.makeText(this, "Respaldo guardado correctamente", android.widget.Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception ex) {
+                    android.widget.Toast.makeText(this, "No se pudo guardar el respaldo", android.widget.Toast.LENGTH_LONG).show();
+                }
+            }
+            pendingBackup = null;
+            pendingBackupName = null;
+            return;
+        }
+        if (requestCode == FILE_CHOOSER_REQUEST && fileCallback != null) {
+            Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            fileCallback.onReceiveValue(result);
+            fileCallback = null;
+        }
     }
 
     @Override protected void onDestroy() {
