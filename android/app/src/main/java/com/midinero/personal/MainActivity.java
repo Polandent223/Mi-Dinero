@@ -37,13 +37,13 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClientCompat() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if (!"appassets.androidplatform.net".equals(uri.getHost())) return new WebResourceResponse(null, null, null);
+                if (!isTrustedAppUri(uri)) return new WebResourceResponse("text/plain", "UTF-8", new java.io.ByteArrayInputStream(new byte[0]));
                 return loader.shouldInterceptRequest(uri);
             }
 
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                return !"appassets.androidplatform.net".equals(uri.getHost());
+                return !isTrustedAppUri(uri);
             }
         });
         webView.addJavascriptInterface(new Object() {
@@ -83,6 +83,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html");
+    }
+
+    private boolean isTrustedAppUri(Uri uri) {
+        return uri != null
+            && "https".equalsIgnoreCase(uri.getScheme())
+            && "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())
+            && uri.getPath() != null
+            && uri.getPath().startsWith("/assets/www/");
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
