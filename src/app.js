@@ -61,7 +61,7 @@ async function bootstrap(){
   // Registrar primero los manejadores críticos. El registro del Service Worker puede
   // tardar o fallar y nunca debe dejar formularios financieros sin su submit handler.
   document.addEventListener('click',onClick);document.addEventListener('submit',onSubmit);document.addEventListener('change',onChange);
-  if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(e=>console.warn(e))}
+  if(!window.MiDineroAndroid && 'serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(e=>console.warn(e))}
   window.addEventListener('online',()=>{updateStatus();showToast('Internet disponible')});window.addEventListener('offline',()=>{updateStatus();showToast('Sigues trabajando sin internet')});
   ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,resetLockTimer,{passive:true}));
   await render();await updateStatus();
