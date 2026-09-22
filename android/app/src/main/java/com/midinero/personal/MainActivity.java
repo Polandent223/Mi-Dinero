@@ -1,6 +1,11 @@
 package com.midinero.personal;
 
 import android.annotation.SuppressLint;
+import android.webkit.JavascriptInterface;
+import android.util.Base64;
+import java.io.File;
+import java.io.FileOutputStream;
+import androidx.core.content.FileProvider;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -36,6 +41,18 @@ public class MainActivity extends AppCompatActivity {
                 return loader.shouldInterceptRequest(request.getUrl());
             }
         });
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface public void saveBackup(String base64, String filename) {
+                try {
+                    byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                    File dir = new File(getExternalFilesDir(null), "backups");
+                    if (!dir.exists()) dir.mkdirs();
+                    File out = new File(dir, filename.replaceAll("[^a-zA-Z0-9._-]", "_"));
+                    try (FileOutputStream fos = new FileOutputStream(out)) { fos.write(bytes); }
+                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this, "Respaldo guardado en almacenamiento de la app", android.widget.Toast.LENGTH_LONG).show());
+                } catch (Exception ignored) {}
+            }
+        }, "MiDineroAndroid");
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
