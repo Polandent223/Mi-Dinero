@@ -24,6 +24,12 @@ Para usar todas las funciones debe abrirse desde HTTPS o localhost. La versión 
 
 Mi Dinero está diseñado para un solo propietario. No incluye multiusuario ni funciones comerciales. Los datos financieros permanecen localmente salvo que el usuario exporte un respaldo.
 
+## Android — 1.0.1 candidato estable
+
+La adaptación Android ya está integrada. Empaqueta la aplicación web estable dentro de un WebView local con origen HTTPS seguro, funciona sin permiso de Internet y conserva el enfoque offline-first. La compilación automatizada valida lint, pruebas unitarias, identidad del paquete y ausencia del permiso de Internet.
+
+Los respaldos cifrados pueden guardarse mediante el selector de documentos de Android en una ubicación elegida por el usuario, fuera del almacenamiento privado de la aplicación. La versión Android actual es 1.0.1 (versionCode 2).
+
 ## Próxima etapa
 
-Con la versión web/PWA estabilizada, la siguiente etapa del proyecto es el empaquetado y adaptación para Android/APK sin sustituir ni poner en riesgo la versión web estable.
+La compilación y las pruebas automáticas están completas. Antes de considerar Android como versión final de uso cotidiano queda la validación física en un teléfono real: instalación/actualización, PIN y bloqueo, persistencia tras cerrar y reiniciar, movimientos, respaldo cifrado, restauración y navegación atrás. La firma release privada se realizará después de esa validación y nunca se almacenará en el repositorio público.
