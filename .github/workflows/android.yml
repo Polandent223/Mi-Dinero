@@ -5,6 +5,9 @@ on:
     branches: [main, android-app]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -36,9 +39,18 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | tee /tmp/badging.txt
           grep -q "package: name='com.midinero.personal'" /tmp/badging.txt
           grep -q "application-label:'Mi Dinero'" /tmp/badging.txt
+      - name: Preparar APK descargable
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Mi-Dinero-Android-1.0.1.apk
       - name: Publicar APK de prueba
         uses: actions/upload-artifact@v4
         with:
           name: Mi-Dinero-Android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: Mi-Dinero-Android-1.0.1.apk
           if-no-files-found: error
+      - name: Publicar descarga permanente
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-v1.0.1 --cleanup-tag -y || true
+          gh release create android-v1.0.1 Mi-Dinero-Android-1.0.1.apk --title "Mi Dinero Android 1.0.1" --notes "APK Android 1.0.1 para instalación directa. Compilado y validado automáticamente desde main." --latest
