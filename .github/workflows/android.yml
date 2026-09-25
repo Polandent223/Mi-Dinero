@@ -52,6 +52,11 @@ jobs:
           name: Mi-Dinero-Android-debug
           path: Mi-Dinero-Android-1.0.1.apk
           if-no-files-found: error
+      - name: Verificar firma del APK debug
+        working-directory: android
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk | tee /tmp/firma-apk.txt
+          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/firma-apk.txt
       - name: Publicar descarga permanente
         if: github.ref == 'refs/heads/main'
         env:
