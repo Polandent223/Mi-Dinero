@@ -39,6 +39,11 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | tee /tmp/badging.txt
           grep -q "package: name='com.midinero.personal'" /tmp/badging.txt
           grep -q "application-label:'Mi Dinero'" /tmp/badging.txt
+      - name: Validar versión Android
+        working-directory: android
+        run: |
+          grep -q "versionCode='2'" /tmp/badging.txt
+          grep -q "versionName='1.0.1'" /tmp/badging.txt
       - name: Preparar APK descargable
         run: cp android/app/build/outputs/apk/debug/app-debug.apk Mi-Dinero-Android-1.0.1.apk
       - name: Publicar APK de prueba
